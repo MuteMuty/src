@@ -1,8 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:src/models/product.dart';
-import 'package:src/widgets/product_card.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+
+import '../models/product.dart';
+import '../widgets/product_tile.dart';
 
 class ProductsScreen extends StatefulWidget {
   @override
@@ -10,83 +13,115 @@ class ProductsScreen extends StatefulWidget {
 }
 
 class _ProductsScreenState extends State<ProductsScreen> {
-  List<Product> _products = [];
-  List<Product> _filteredProducts = [];
-  final _searchController = TextEditingController();
+  static const _pageSize = 20;
+
+  String _searchTerm = '';
+
+  final PagingController<int, ProductItem> _pagingController =
+      PagingController(firstPageKey: 0);
 
   @override
   void initState() {
+    _pagingController.addPageRequestListener((pageKey) {
+      _fetchPage(pageKey);
+    });
     super.initState();
-    _fetchProducts();
   }
 
-  _fetchProducts() async {
-    final Uri uri = Uri.https('dummyjson.com', '/products');
-    final response = await http.get(uri);
-    var products = json.decode(response.body)['products'] as List;
-    setState(() {
-      _products = products.map((product) => Product.fromJson(product)).toList();
-      _filteredProducts = _products;
-    });
-  }
+  Future<void> _fetchPage(int pageKey) async {
+    final queryParameters = {
+      'q': _searchTerm,
+      'limit': _pageSize.toString(),
+      'skip': pageKey.toString(),
+    };
 
-  void _filterProducts(String value) {
-    setState(() {
-      _filteredProducts = _products
-          .where((product) =>
-              product.title.toLowerCase().contains(value.toLowerCase()))
-          .toList();
-    });
-  }
+    try {
+      List<ProductItem> products = [];
+      Uri uri = Uri.https('dummyjson.com', '/products/search', queryParameters);
+      final response = await http.get(uri);
+      final decodedProducts = json.decode(response.body)['products'] as List;
 
-  @override
-  void dispose() {
-    super.dispose();
-    _searchController.dispose();
+      decodedProducts.forEach((product) {
+        products.add(ProductItem(
+          product: Product.fromJson(product),
+        ));
+      });
+
+      final isLastPage = products.length < _pageSize;
+      if (isLastPage) {
+        _pagingController.appendLastPage(products);
+      } else {
+        final nextPageKey = pageKey + products.length;
+        _pagingController.appendPage(products, nextPageKey);
+      }
+    } catch (error) {
+      _pagingController.error = error;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          margin: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor,
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: TextField(
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 15),
-              hintText: 'Search for a product',
-              hintStyle: TextStyle(color: Colors.grey[300]),
-            ),
-            controller: _searchController,
-            onChanged: _filterProducts,
-          ),
-        ),
-        if (_filteredProducts.isEmpty)
-          const Expanded(
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
-          )
-        else
-          Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10.0,
-                  mainAxisSpacing: 5.0,
-                  childAspectRatio: 6 / 8),
-              itemCount: _filteredProducts.length,
-              itemBuilder: (ctx, i) =>
-                  ProductCard(product: _filteredProducts[i]),
-              padding: const EdgeInsets.all(10),
-            ),
-          ),
-      ],
+    return Scaffold(
+      /* appBar: AppBar(
+        title: const Text("Shop App"),
+        centerTitle: true,
+        backgroundColor: Colors.grey[900],
+      ), */
+      body: buildProductsView(),
+      backgroundColor: Colors.grey[900],
     );
+  }
+
+  Widget buildProductsView() => RefreshIndicator(
+        onRefresh: () => Future.sync(
+          () => _pagingController.refresh(),
+        ),
+        child: CustomScrollView(
+          slivers: <Widget>[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Search',
+                    labelStyle: TextStyle(color: Colors.white),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  onChanged: _updateSearchTerm,
+                ),
+              ),
+            ),
+            PagedSliverGrid<int, ProductItem>(
+              pagingController: _pagingController,
+              builderDelegate: PagedChildBuilderDelegate<ProductItem>(
+                itemBuilder: (context, item, index) => item,
+              ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.86,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  void _updateSearchTerm(String searchTerm) {
+    _searchTerm = searchTerm;
+    _pagingController.refresh();
+  }
+
+  @override
+  void dispose() {
+    _pagingController.dispose();
+    super.dispose();
   }
 }
