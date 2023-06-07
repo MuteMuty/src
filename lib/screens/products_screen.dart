@@ -6,6 +6,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 import '../models/product.dart';
 import '../widgets/product_tile.dart';
+import 'details_screen.dart';
 
 class ProductsScreen extends StatefulWidget {
   @override
@@ -62,11 +63,25 @@ class _ProductsScreenState extends State<ProductsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /* appBar: AppBar(
+      appBar: AppBar(
         title: const Text("Shop App"),
         centerTitle: true,
         backgroundColor: Colors.grey[900],
-      ), */
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.shopping_cart),
+            onPressed: () {
+              debugPrint('Cart');
+            },
+          ),
+        ],
+        leading: IconButton(
+          icon: const Icon(Icons.person),
+          onPressed: () {
+            debugPrint('Person');
+          },
+        ),
+      ),
       body: buildProductsView(),
       backgroundColor: Colors.grey[900],
     );
@@ -87,12 +102,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     labelStyle: TextStyle(color: Colors.white),
                     border: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.all(Radius.circular(15)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.all(Radius.circular(15)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.all(Radius.circular(15)),
                     ),
                   ),
                   style: const TextStyle(color: Colors.white),
@@ -103,7 +121,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
             PagedSliverGrid<int, ProductItem>(
               pagingController: _pagingController,
               builderDelegate: PagedChildBuilderDelegate<ProductItem>(
-                itemBuilder: (context, item, index) => item,
+                itemBuilder: (context, item, index) => InkWell(
+                  child: item,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => DetailsScreen(
+                        product: item.product,
+                      ),
+                    ),
+                  ),
+                ),
               ),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
