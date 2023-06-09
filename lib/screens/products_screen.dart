@@ -7,6 +7,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import '../models/product.dart';
 import '../widgets/product_tile.dart';
 import 'details_screen.dart';
+import 'user_screen.dart';
 
 class ProductsScreen extends StatefulWidget {
   @override
@@ -79,6 +80,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
           icon: const Icon(Icons.person),
           onPressed: () {
             debugPrint('Person');
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => UserScreen(),
+            );
           },
         ),
       ),

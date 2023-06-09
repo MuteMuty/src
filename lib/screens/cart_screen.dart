@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:http/http.dart' as http;
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -11,32 +14,30 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-
   @override
   void initState() async {
-    final SharedPreferences prefs = await _prefs;
-    if (!prefs.containsKey('cart')) {
-      prefs.setStringList('cart', List<String>.empty());
-    }
-    List<String>? cart = prefs.getStringList('cart');
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(itemBuilder: itemBuilder);
+    return Placeholder();
   }
 
-  // method to build the list of products
-  Widget itemBuilder(BuildContext context, int index) {
-    return ListTile(
-      title: Text('Product $index'),
-      subtitle: Text('Description of product $index'),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete),
-        onPressed: () {},
-      ),
-    );
+  Future<List<String>> fetchCart() async {
+    try {
+      List<String> products = [];
+      Uri uri = Uri.https('dummyjson.com', '/users/5/carts');
+      final response = await http.get(uri);
+      final decodedProducts = json.decode(response.body)['products'] as List;
+
+      /* decodedProducts.forEach((product) {
+        products.add(Product.fromJson(product));
+      }); */
+
+      return products;
+    } catch (error) {
+      throw error;
+    }
   }
 }
