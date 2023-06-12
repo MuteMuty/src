@@ -82,7 +82,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
             debugPrint('Person');
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => UserScreen(),
+                builder: (context) => const UserScreen(),
+              ),
             );
           },
         ),
