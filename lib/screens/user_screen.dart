@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/user.dart';
+import '../widgets/search_field.dart';
+import '../widgets/user_tile.dart';
 
 class UserScreen extends StatefulWidget {
   const UserScreen({super.key});
@@ -16,7 +18,9 @@ class UserScreen extends StatefulWidget {
 }
 
 class _UserScreenState extends State<UserScreen> {
-  static const _pageSize = 20;
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  static const _pageSize = 10;
+  User? _user;
 
   String _searchTerm = '';
 
@@ -28,16 +32,106 @@ class _UserScreenState extends State<UserScreen> {
     _pagingController.addPageRequestListener((pageKey) {
       _fetchPage(pageKey);
     });
+    getCurrentUser();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: buildProductsView(),
+      appBar: AppBar(
+        title: const Text('Users'),
+        centerTitle: true,
+        backgroundColor: Colors.grey[900],
+      ),
+      body: SizedBox(
+        height: MediaQuery.of(context).size.height -
+            (_user != null
+                ? 200
+                : 60 + 56), // 200 = bottom sheet height, 56 = app bar height
+        child: buildProductsView(),
+      ),
       backgroundColor: Colors.grey[900],
+      bottomSheet: Container(
+        height: _user != null ? 200 : 60,
+        width: MediaQuery.of(context).size.width,
+        color: Colors.grey[900],
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: _user != null
+              ? Column(
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundImage: NetworkImage(_user!.image),
+                        ),
+                        const SizedBox(
+                          width: 20,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                                '${_user!.firstName} ${_user!.maidenName} ${_user!.lastName}, ${_user!.age}'),
+                            Text(_user!.gender),
+                            Text(_user!.email),
+                            Text(_user!.phone),
+                            Text(
+                                '${_user!.birthDate.day}.${_user!.birthDate.month}.${_user!.birthDate.year}'),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    ElevatedButton(
+                      child: const Text('Sign out'),
+                      onPressed: () async {
+                        final SharedPreferences prefs = await _prefs;
+                        prefs.remove('user');
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                )
+              : const Text(
+                  'No user Logged in',
+                  textAlign: TextAlign.center,
+                ),
+        ),
+      ),
     );
   }
+
+  Widget buildProductsView() => RefreshIndicator(
+        onRefresh: () => Future.sync(
+          () => _pagingController.refresh(),
+        ),
+        child: CustomScrollView(
+          slivers: <Widget>[
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: SearchField(
+                onChanged: _updateSearchTerm,
+              ),
+            ),
+            PagedSliverList<int, User>(
+              pagingController: _pagingController,
+              builderDelegate: PagedChildBuilderDelegate<User>(
+                itemBuilder: (context, item, index) =>
+                    (_searchTerm.isNotEmpty || _user == null)
+                        ? UserTile(
+                            user: item,
+                          )
+                        : const SizedBox(),
+              ),
+            ),
+          ],
+        ),
+      );
 
   Future<void> _fetchPage(int pageKey) async {
     final queryParameters = {
@@ -49,7 +143,7 @@ class _UserScreenState extends State<UserScreen> {
     try {
       int err = 0;
       List<User> users = [];
-      Uri uri = Uri.https('dummyjson.com', '/users', queryParameters);
+      Uri uri = Uri.https('dummyjson.com', '/users/search', queryParameters);
       final response = await http.get(uri);
       final decodedUsers = json.decode(response.body)['users'] as List;
 
@@ -74,52 +168,21 @@ class _UserScreenState extends State<UserScreen> {
     }
   }
 
-  Widget buildProductsView() => RefreshIndicator(
-        onRefresh: () => Future.sync(
-          () => _pagingController.refresh(),
-        ),
-        child: CustomScrollView(
-          slivers: <Widget>[
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Search',
-                    labelStyle: TextStyle(color: Colors.white),
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.all(Radius.circular(15)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.all(Radius.circular(15)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.all(Radius.circular(15)),
-                    ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  onChanged: _updateSearchTerm,
-                ),
-              ),
-            ),
-            PagedSliverList<int, User>(
-              pagingController: _pagingController,
-              builderDelegate: PagedChildBuilderDelegate<User>(
-                itemBuilder: (context, item, index) => ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(item.image),
-                  ),
-                  title: Text(item.firstName),
-                  subtitle: Text(item.email),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+  void getCurrentUser() async {
+    final SharedPreferences prefs = await _prefs;
+    if (prefs.getInt('user') == null) {
+      return null;
+    }
+    final int? currentUser = prefs.getInt('user');
+
+    Uri uri = Uri.https('dummyjson.com', '/users/$currentUser');
+    final response = await http.get(uri);
+    final decodedUser = json.decode(response.body);
+    debugPrint(decodedUser.toString());
+    setState(() {
+      _user = User.fromJson(decodedUser);
+    });
+  }
 
   void _updateSearchTerm(String searchTerm) {
     _searchTerm = searchTerm;

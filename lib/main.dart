@@ -8,6 +8,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: ProductsScreen(),
+      theme: ThemeData(
+        // Define the default brightness and colors.
+        brightness: Brightness.dark,
+        primaryColor: Colors.lightBlue[800],
+
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(
+            fontSize: 14,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/product.dart';
 import '../widgets/product_tile.dart';
+import '../widgets/search_field.dart';
 import 'details_screen.dart';
 import 'user_screen.dart';
 
@@ -15,6 +17,7 @@ class ProductsScreen extends StatefulWidget {
 }
 
 class _ProductsScreenState extends State<ProductsScreen> {
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   static const _pageSize = 20;
 
   String _searchTerm = '';
@@ -29,6 +32,76 @@ class _ProductsScreenState extends State<ProductsScreen> {
     });
     super.initState();
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Shop App"),
+        centerTitle: true,
+        backgroundColor: Colors.grey[900],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.shopping_cart),
+            onPressed: () {
+              debugPrint('Cart');
+            },
+          ),
+        ],
+        leading: IconButton(
+          icon: const Icon(Icons.person),
+          /* Image.network(
+            'https://cdn.iconscout.com/icon/free/png-256/avatar-370-456322.png',
+          ) */
+          onPressed: () {
+            debugPrint('Person');
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const UserScreen(),
+              ),
+            );
+          },
+        ),
+      ),
+      body: buildProductsView(),
+      backgroundColor: Colors.grey[900],
+    );
+  }
+
+  Widget buildProductsView() => RefreshIndicator(
+        onRefresh: () => Future.sync(
+          () => _pagingController.refresh(),
+        ),
+        child: CustomScrollView(
+          slivers: <Widget>[
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: SearchField(
+                onChanged: _updateSearchTerm,
+              ),
+            ),
+            PagedSliverGrid<int, ProductItem>(
+              pagingController: _pagingController,
+              builderDelegate: PagedChildBuilderDelegate<ProductItem>(
+                itemBuilder: (context, item, index) => InkWell(
+                  child: item,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => DetailsScreen(
+                        product: item.product,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.86,
+              ),
+            ),
+          ],
+        ),
+      );
 
   Future<void> _fetchPage(int pageKey) async {
     final queryParameters = {
@@ -60,92 +133,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
       _pagingController.error = error;
     }
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Shop App"),
-        centerTitle: true,
-        backgroundColor: Colors.grey[900],
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_cart),
-            onPressed: () {
-              debugPrint('Cart');
-            },
-          ),
-        ],
-        leading: IconButton(
-          icon: const Icon(Icons.person),
-          onPressed: () {
-            debugPrint('Person');
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const UserScreen(),
-              ),
-            );
-          },
-        ),
-      ),
-      body: buildProductsView(),
-      backgroundColor: Colors.grey[900],
-    );
-  }
-
-  Widget buildProductsView() => RefreshIndicator(
-        onRefresh: () => Future.sync(
-          () => _pagingController.refresh(),
-        ),
-        child: CustomScrollView(
-          slivers: <Widget>[
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Search',
-                    labelStyle: TextStyle(color: Colors.white),
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.all(Radius.circular(15)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.all(Radius.circular(15)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.all(Radius.circular(15)),
-                    ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  onChanged: _updateSearchTerm,
-                ),
-              ),
-            ),
-            PagedSliverGrid<int, ProductItem>(
-              pagingController: _pagingController,
-              builderDelegate: PagedChildBuilderDelegate<ProductItem>(
-                itemBuilder: (context, item, index) => InkWell(
-                  child: item,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => DetailsScreen(
-                        product: item.product,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.86,
-              ),
-            ),
-          ],
-        ),
-      );
 
   void _updateSearchTerm(String searchTerm) {
     _searchTerm = searchTerm;
