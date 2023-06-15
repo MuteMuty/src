@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:src/screens/cart_screen.dart';
 
 import '../models/product.dart';
 import '../widgets/product_tile.dart';
@@ -44,7 +45,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
           IconButton(
             icon: const Icon(Icons.shopping_cart),
             onPressed: () {
-              debugPrint('Cart');
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const CartScreen(),
+                ),
+              );
             },
           ),
         ],
@@ -54,7 +59,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
             'https://cdn.iconscout.com/icon/free/png-256/avatar-370-456322.png',
           ) */
           onPressed: () {
-            debugPrint('Person');
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => const UserScreen(),

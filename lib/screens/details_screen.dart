@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'cart_screen.dart';
 import 'fullscreen_images.dart';
@@ -18,7 +17,6 @@ class DetailsScreen extends StatefulWidget {
 }
 
 class _DetailsScreenState extends State<DetailsScreen> {
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   List<bool> _dots = [];
 
   @override
@@ -119,19 +117,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   Text(
                     widget.product.title,
                     style: const TextStyle(
-                      color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    "€${widget.product.price}",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
+                  Text("€${widget.product.price}"),
                   const SizedBox(height: 10),
                   Row(
                     children: [
@@ -140,45 +131,26 @@ class _DetailsScreenState extends State<DetailsScreen> {
                         color: Colors.yellow,
                       ),
                       const SizedBox(width: 5),
-                      Text(
-                        "${widget.product.rating}",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
+                      Text("${widget.product.rating}"),
                     ],
                   ),
                   const SizedBox(height: 10),
                   const Text(
                     "Description",
                     style: TextStyle(
-                      color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    widget.product.description,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
+                  Text(widget.product.description),
                 ],
               ),
             ),
             ElevatedButton(
               child: const Text('Add to cart'),
               onPressed: () async {
-                final SharedPreferences prefs = await _prefs;
-                if (!prefs.containsKey('cart')) {
-                  prefs.setStringList('cart', List<String>.empty());
-                }
-                List<String>? cart = prefs.getStringList('cart');
-                cart!.add(widget.product.id.toString());
-                prefs.setStringList('cart', cart);
+                // TODO: Add to cart
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(

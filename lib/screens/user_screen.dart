@@ -64,7 +64,7 @@ class _UserScreenState extends State<UserScreen> {
                     Row(
                       children: [
                         CircleAvatar(
-                          radius: 50,
+                          radius: 40,
                           backgroundImage: NetworkImage(_user!.image),
                         ),
                         const SizedBox(

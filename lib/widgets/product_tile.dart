@@ -27,7 +27,6 @@ class ProductItem extends StatelessWidget {
             '${product.price}€ • ${product.title}',
             style: const TextStyle(
               fontSize: 15,
-              color: Colors.white,
             ),
             overflow: TextOverflow.ellipsis,
           ),
