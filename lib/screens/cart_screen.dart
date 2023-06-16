@@ -20,6 +20,7 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   static const _pageSize = 10;
+  int _cartId = 0;
 
   String _searchTerm = '';
 
@@ -76,6 +77,7 @@ class _CartScreenState extends State<CartScreen> {
               pagingController: _pagingController,
               builderDelegate: PagedChildBuilderDelegate<CartItem>(
                 itemBuilder: (context, item, index) => CartTile(
+                  cartId: _cartId,
                   cartItem: item,
                 ),
               ),
@@ -90,7 +92,6 @@ class _CartScreenState extends State<CartScreen> {
       return null;
     }
     final int? currentUser = prefs.getInt('user');
-    debugPrint(currentUser.toString());
 
     final queryParameters = {
       'q': _searchTerm,
@@ -107,6 +108,9 @@ class _CartScreenState extends State<CartScreen> {
 
       decodedCarts.forEach((cart) {
         carts.add(Cart.fromJson(cart));
+      });
+      setState(() {
+        _cartId = carts[0].id;
       });
 
       final isLastPage = carts.length < _pageSize;
