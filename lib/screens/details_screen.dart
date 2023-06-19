@@ -1,11 +1,11 @@
-import 'dart:async';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import 'cart_screen.dart';
 import 'fullscreen_images.dart';
 
 import '../models/product.dart';
+import '../widgets/my_snack_bar.dart';
 
 class DetailsScreen extends StatefulWidget {
   final Product product;
@@ -68,8 +68,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       return InkWell(
                         child: Hero(
                           tag: widget.product.images[index],
-                          child: Image.network(
-                            widget.product.images[index],
+                          child: CachedNetworkImage(
+                            imageUrl: widget.product.images[index],
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -153,17 +153,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 // TODO: Add to cart
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Added to cart',
-                      textAlign: TextAlign.center,
-                    ),
-                    width: 150,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(20)),
-                    ),
-                  ),
+                  mySnackBar(context, 'Added to cart'),
                 );
               },
             ),

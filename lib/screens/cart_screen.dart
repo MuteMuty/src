@@ -6,8 +6,11 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:src/models/cart.dart';
+import 'package:src/screens/user_screen.dart';
 
+import '../models/user.dart';
 import '../widgets/cart_tile.dart';
+import '../widgets/my_snack_bar.dart';
 import '../widgets/search_field.dart';
 
 class CartScreen extends StatefulWidget {
@@ -21,6 +24,7 @@ class _CartScreenState extends State<CartScreen> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   static const _pageSize = 10;
   int _cartId = 0;
+  User? _user;
 
   String _searchTerm = '';
 
@@ -32,6 +36,7 @@ class _CartScreenState extends State<CartScreen> {
     _pagingController.addPageRequestListener((pageKey) {
       _fetchPage(pageKey);
     });
+    getCurrentUser();
     super.initState();
   }
 
@@ -43,25 +48,43 @@ class _CartScreenState extends State<CartScreen> {
         centerTitle: true,
         backgroundColor: Colors.grey[900],
       ),
-      body: buildProductsView(),
+      body: SizedBox(
+        height: MediaQuery.of(context).size.height - (70 + 56),
+        child: _user != null
+            ? buildCartView()
+            : const Center(
+                child: Text('No user signed in!'),
+              ),
+      ),
       backgroundColor: Colors.grey[900],
-      bottomSheet: ElevatedButton(
-        child: const Text('Order'),
-        onPressed: () async {
-          final SharedPreferences prefs = await _prefs;
-          prefs.remove('user');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Order placed successfully!'),
-            ),
-          );
-          Navigator.of(context).pop();
-        },
+      bottomSheet: Container(
+        alignment: Alignment.center,
+        height: 70,
+        color: Colors.grey[900],
+        padding: const EdgeInsets.all(20.0),
+        child: ElevatedButton(
+          child: Text(_user != null ? 'Order' : 'Sign in to order'),
+          onPressed: () async {
+            if (_user == null) {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const UserScreen(),
+                ),
+              );
+              return;
+            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              mySnackBar(context, 'Order placed successfully!'),
+            );
+            Navigator.of(context).pop();
+          },
+        ),
       ),
     );
   }
 
-  Widget buildProductsView() => RefreshIndicator(
+  Widget buildCartView() => RefreshIndicator(
         onRefresh: () => Future.sync(
           () => _pagingController.refresh(),
         ),
@@ -123,6 +146,22 @@ class _CartScreenState extends State<CartScreen> {
     } catch (error) {
       _pagingController.error = error;
     }
+  }
+
+  void getCurrentUser() async {
+    final SharedPreferences prefs = await _prefs;
+    if (prefs.getInt('user') == null) {
+      return null;
+    }
+    final int? currentUser = prefs.getInt('user');
+
+    Uri uri = Uri.https('dummyjson.com', '/users/$currentUser');
+    final response = await http.get(uri);
+    final decodedUser = json.decode(response.body);
+
+    setState(() {
+      _user = User.fromJson(decodedUser);
+    });
   }
 
   void _updateSearchTerm(String searchTerm) {

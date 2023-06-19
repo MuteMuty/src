@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:src/screens/cart_screen.dart';
 
 import '../models/product.dart';
@@ -18,7 +17,6 @@ class ProductsScreen extends StatefulWidget {
 }
 
 class _ProductsScreenState extends State<ProductsScreen> {
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   static const _pageSize = 20;
 
   String _searchTerm = '';
@@ -55,9 +53,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
         ],
         leading: IconButton(
           icon: const Icon(Icons.person),
-          /* Image.network(
-            'https://cdn.iconscout.com/icon/free/png-256/avatar-370-456322.png',
-          ) */
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(

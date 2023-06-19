@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/user.dart';
+import '../widgets/my_snack_bar.dart';
 import '../widgets/search_field.dart';
 import '../widgets/user_tile.dart';
 
@@ -56,52 +58,56 @@ class _UserScreenState extends State<UserScreen> {
         height: _user != null ? 200 : 60,
         width: MediaQuery.of(context).size.width,
         color: Colors.grey[900],
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: _user != null
-              ? Column(
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundImage: NetworkImage(_user!.image),
-                        ),
-                        const SizedBox(
-                          width: 20,
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                '${_user!.firstName} ${_user!.maidenName} ${_user!.lastName}, ${_user!.age}'),
-                            Text(_user!.gender),
-                            Text(_user!.email),
-                            Text(_user!.phone),
-                            Text(
-                                '${_user!.birthDate.day}.${_user!.birthDate.month}.${_user!.birthDate.year}'),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    ElevatedButton(
-                      child: const Text('Sign out'),
-                      onPressed: () async {
-                        final SharedPreferences prefs = await _prefs;
-                        prefs.remove('user');
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                )
-              : const Text(
-                  'No user Logged in',
-                  textAlign: TextAlign.center,
-                ),
-        ),
+        padding: const EdgeInsets.all(20.0),
+        child: _user != null
+            ? Column(
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 40,
+                        backgroundImage:
+                            CachedNetworkImageProvider(_user!.image),
+                      ),
+                      const SizedBox(
+                        width: 20,
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              '${_user!.firstName} ${_user!.maidenName} ${_user!.lastName}, ${_user!.age}'),
+                          Text(_user!.gender),
+                          Text(_user!.email),
+                          Text(_user!.phone),
+                          Text(
+                              '${_user!.birthDate.day}.${_user!.birthDate.month}.${_user!.birthDate.year}'),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  ElevatedButton(
+                    child: const Text('Sign out'),
+                    onPressed: () async {
+                      final SharedPreferences prefs = await _prefs;
+                      prefs.remove('user');
+
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        mySnackBar(context, 'Signed out successfully'),
+                      );
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              )
+            : const Text(
+                'No user Logged in',
+                textAlign: TextAlign.center,
+              ),
       ),
     );
   }
@@ -178,7 +184,7 @@ class _UserScreenState extends State<UserScreen> {
     Uri uri = Uri.https('dummyjson.com', '/users/$currentUser');
     final response = await http.get(uri);
     final decodedUser = json.decode(response.body);
-    debugPrint(decodedUser.toString());
+
     setState(() {
       _user = User.fromJson(decodedUser);
     });

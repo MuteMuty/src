@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class FullscreenImages extends StatefulWidget {
@@ -24,9 +25,16 @@ class _FullscreenImagesState extends State<FullscreenImages> {
             itemBuilder: (context, index) {
               return Hero(
                 tag: widget.images[index],
-                child: Image.network(
-                  widget.images[index],
-                  fit: BoxFit.fitWidth,
+                child: GestureDetector(
+                  child: CachedNetworkImage(
+                    imageUrl: widget.images[index],
+                    fit: BoxFit.fitWidth,
+                  ),
+                  onVerticalDragUpdate: (details) {
+                    if (details.localPosition.distance > 400) {
+                      Navigator.of(context).pop();
+                    }
+                  },
                 ),
               );
             },

@@ -12,7 +12,7 @@ class User {
   final DateTime birthDate;
   final String image;
   final String bloodGroup;
-  final double height;
+  final int height;
   final double weight;
   final String eyeColor;
   final Hair hair;

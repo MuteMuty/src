@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/cart.dart';
 
 class CartTile extends StatefulWidget {
-  final cartId;
+  final int cartId;
   CartItem cartItem;
   CartTile({super.key, required this.cartId, required this.cartItem});
 
@@ -17,7 +17,6 @@ class CartTile extends StatefulWidget {
 }
 
 class _CartTileState extends State<CartTile> {
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   int _currQuantity = 0;
 
   @override
@@ -40,7 +39,8 @@ class _CartTileState extends State<CartTile> {
                   child: Row(
                     children: [
                       CircleAvatar(
-                        backgroundImage: NetworkImage(image.data ?? ""),
+                        backgroundImage:
+                            CachedNetworkImageProvider(image.data ?? ""),
                       ),
                       const SizedBox(width: 10),
                       Column(
@@ -62,15 +62,16 @@ class _CartTileState extends State<CartTile> {
                           IconButton(
                             icon: const Icon(Icons.remove),
                             onPressed: () {
-                              _removeItemQuantity(
-                                  widget.cartId, widget.cartItem.id);
+                              _updateItemQuantity(
+                                  widget.cartId, widget.cartItem.id,
+                                  remove: true);
                             },
                           ),
                           Text('$_currQuantity'),
                           IconButton(
                             icon: const Icon(Icons.add),
                             onPressed: () {
-                              _addItemQuantity(
+                              _updateItemQuantity(
                                   widget.cartId, widget.cartItem.id);
                             },
                           ),
@@ -86,15 +87,16 @@ class _CartTileState extends State<CartTile> {
     final queryParameters = {
       'select': 'thumbnail',
     };
+
     Uri uri = Uri.https('dummyjson.com', '/products/$id', queryParameters);
     final response = await http.get(uri);
     final String decodedString = json.decode(response.body)['thumbnail'];
-    debugPrint(decodedString);
 
     return decodedString;
   }
 
-  Future<void> _addItemQuantity(int cartId, int itemId) async {
+  Future<void> _updateItemQuantity(int cartId, int itemId,
+      {bool remove = false}) async {
     Uri uri = Uri.https('dummyjson.com', '/carts/$cartId');
     final response = await http.put(
       uri,
@@ -106,38 +108,15 @@ class _CartTileState extends State<CartTile> {
         'products': [
           {
             'id': itemId,
-            'quantity': _currQuantity + 1,
+            'quantity': _currQuantity + (remove ? -1 : 1),
           },
         ]
       }),
     );
     setState(() {
-      _currQuantity++;
-    });
+      _currQuantity += (remove ? -1 : 1);
+    }); /* 
     final decodedString = json.decode(response.body);
-    debugPrint(decodedString.toString());
-  }
-
-  Future<void> _removeItemQuantity(int cartId, int itemId) async {
-    debugPrint('Cart ID: $cartId, Item ID: $itemId');
-    Uri uri = Uri.https('dummyjson.com', '/carts/$cartId');
-    final response = await http.put(
-      uri,
-      headers: <String, String>{
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'merge': true,
-        'products': [
-          {
-            'id': itemId,
-            'quantity': _currQuantity - 1,
-          },
-        ]
-      }),
-    );
-    setState(() {
-      _currQuantity--;
-    });
+    debugPrint(decodedString.toString()); */
   }
 }
