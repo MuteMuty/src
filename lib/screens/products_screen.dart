@@ -3,15 +3,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:src/screens/cart_screen.dart';
 
 import '../models/product.dart';
 import '../widgets/product_tile.dart';
 import '../widgets/search_field.dart';
 import 'details_screen.dart';
-import 'user_screen.dart';
 
 class ProductsScreen extends StatefulWidget {
+  const ProductsScreen({super.key});
+
   @override
   _ProductsScreenState createState() => _ProductsScreenState();
 }
@@ -43,22 +43,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
           IconButton(
             icon: const Icon(Icons.shopping_cart),
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const CartScreen(),
-                ),
-              );
+              Navigator.pushNamed(context, '/cart');
             },
           ),
         ],
         leading: IconButton(
           icon: const Icon(Icons.person),
           onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const UserScreen(),
-              ),
-            );
+            Navigator.pushNamed(context, '/user');
           },
         ),
       ),
@@ -71,34 +63,37 @@ class _ProductsScreenState extends State<ProductsScreen> {
         onRefresh: () => Future.sync(
           () => _pagingController.refresh(),
         ),
-        child: CustomScrollView(
-          slivers: <Widget>[
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: SearchField(
-                onChanged: _updateSearchTerm,
+        child: GestureDetector(
+          onPanDown: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+          child: CustomScrollView(
+            slivers: <Widget>[
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: SearchField(
+                  onChanged: _updateSearchTerm,
+                ),
               ),
-            ),
-            PagedSliverGrid<int, ProductItem>(
-              pagingController: _pagingController,
-              builderDelegate: PagedChildBuilderDelegate<ProductItem>(
-                itemBuilder: (context, item, index) => InkWell(
-                  child: item,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => DetailsScreen(
-                        product: item.product,
+              PagedSliverGrid<int, ProductItem>(
+                pagingController: _pagingController,
+                builderDelegate: PagedChildBuilderDelegate<ProductItem>(
+                  itemBuilder: (context, item, index) => InkWell(
+                    child: item,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => DetailsScreen(
+                          product: item.product,
+                        ),
                       ),
                     ),
                   ),
                 ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.86,
+                ),
               ),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.86,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
 

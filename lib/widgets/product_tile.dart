@@ -14,12 +14,6 @@ class ProductItem extends StatelessWidget {
     double dimensions = (MediaQuery.of(context).size.width - 15) / 2;
     return Column(
       children: [
-        /* Image.network(
-          product.thumbnail,
-          width: dimensions,
-          height: dimensions,
-          fit: BoxFit.cover,
-        ), */
         CachedNetworkImage(
           imageUrl: product.thumbnail,
           width: dimensions,

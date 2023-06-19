@@ -9,8 +9,8 @@ import '../models/cart.dart';
 
 class CartTile extends StatefulWidget {
   final int cartId;
-  CartItem cartItem;
-  CartTile({super.key, required this.cartId, required this.cartItem});
+  final CartItem cartItem;
+  const CartTile({super.key, required this.cartId, required this.cartItem});
 
   @override
   State<CartTile> createState() => _CartTileState();

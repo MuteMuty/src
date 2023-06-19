@@ -1,8 +1,8 @@
 class Cart {
   final int id;
   final List<CartItem> products;
-  final double total;
-  final double discountedTotal;
+  final int total;
+  final int discountedTotal;
   final int userId;
   final int totalProducts;
   final int totalQuantity;
@@ -35,11 +35,11 @@ class Cart {
 class CartItem {
   final int id;
   final String title;
-  final double price;
+  final int price;
   final int quantity;
-  final double total;
+  final int total;
   final double discountPercentage;
-  final double discountedPrice;
+  final int discountedPrice;
 
   CartItem({
     required this.id,

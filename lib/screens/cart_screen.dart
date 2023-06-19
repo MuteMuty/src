@@ -11,7 +11,6 @@ import 'package:src/screens/user_screen.dart';
 import '../models/user.dart';
 import '../widgets/cart_tile.dart';
 import '../widgets/my_snack_bar.dart';
-import '../widgets/search_field.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -25,8 +24,6 @@ class _CartScreenState extends State<CartScreen> {
   static const _pageSize = 10;
   int _cartId = 0;
   User? _user;
-
-  String _searchTerm = '';
 
   final PagingController<int, CartItem> _pagingController =
       PagingController(firstPageKey: 0);
@@ -84,29 +81,19 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget buildCartView() => RefreshIndicator(
-        onRefresh: () => Future.sync(
-          () => _pagingController.refresh(),
-        ),
-        child: CustomScrollView(
-          slivers: <Widget>[
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: SearchField(
-                onChanged: _updateSearchTerm,
+  Widget buildCartView() => CustomScrollView(
+        slivers: <Widget>[
+          PagedSliverList<int, CartItem>(
+            pagingController: _pagingController,
+            builderDelegate: PagedChildBuilderDelegate<CartItem>(
+              animateTransitions: true,
+              itemBuilder: (context, item, index) => CartTile(
+                cartId: _cartId,
+                cartItem: item,
               ),
             ),
-            PagedSliverList<int, CartItem>(
-              pagingController: _pagingController,
-              builderDelegate: PagedChildBuilderDelegate<CartItem>(
-                itemBuilder: (context, item, index) => CartTile(
-                  cartId: _cartId,
-                  cartItem: item,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
 
   Future<void> _fetchPage(int pageKey) async {
@@ -116,18 +103,15 @@ class _CartScreenState extends State<CartScreen> {
     }
     final int? currentUser = prefs.getInt('user');
 
-    final queryParameters = {
-      'q': _searchTerm,
-      'limit': _pageSize.toString(),
-      'skip': pageKey.toString(),
-    };
-
     try {
       List<Cart> carts = [];
-      Uri uri = Uri.https(
-          'dummyjson.com', '/carts/user/$currentUser', queryParameters);
+      Uri uri = Uri.https('dummyjson.com', '/carts/user/$currentUser');
       final response = await http.get(uri);
       final decodedCarts = json.decode(response.body)['carts'] as List;
+      if (decodedCarts.isEmpty) {
+        _pagingController.appendLastPage([]);
+        return;
+      }
 
       decodedCarts.forEach((cart) {
         carts.add(Cart.fromJson(cart));
@@ -162,11 +146,6 @@ class _CartScreenState extends State<CartScreen> {
     setState(() {
       _user = User.fromJson(decodedUser);
     });
-  }
-
-  void _updateSearchTerm(String searchTerm) {
-    _searchTerm = searchTerm;
-    _pagingController.refresh();
   }
 
   @override

@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import 'cart_screen.dart';
 import 'fullscreen_images.dart';
 
 import '../models/product.dart';
@@ -11,6 +10,8 @@ class DetailsScreen extends StatefulWidget {
   final Product product;
 
   const DetailsScreen({required this.product, super.key});
+
+  static const routeName = '/details';
 
   @override
   State<DetailsScreen> createState() => _DetailsScreenState();
@@ -38,12 +39,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
           IconButton(
             icon: const Icon(Icons.shopping_cart),
             onPressed: () {
-              debugPrint('Cart');
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => CartScreen(),
-                ),
-              );
+              Navigator.pushNamed(context, '/cart');
             },
           ),
         ],

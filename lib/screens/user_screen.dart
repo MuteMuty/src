@@ -49,13 +49,13 @@ class _UserScreenState extends State<UserScreen> {
       body: SizedBox(
         height: MediaQuery.of(context).size.height -
             (_user != null
-                ? 200
-                : 60 + 56), // 200 = bottom sheet height, 56 = app bar height
+                ? 210
+                : 60 + 56), // 210 = bottom sheet height, 56 = app bar height
         child: buildProductsView(),
       ),
       backgroundColor: Colors.grey[900],
       bottomSheet: Container(
-        height: _user != null ? 200 : 60,
+        height: _user != null ? 210 : 60,
         width: MediaQuery.of(context).size.width,
         color: Colors.grey[900],
         padding: const EdgeInsets.all(20.0),
@@ -158,7 +158,6 @@ class _UserScreenState extends State<UserScreen> {
           users.add(User.fromJson(decodedUsers[i]));
         } catch (e) {
           err++;
-          debugPrint(e.toString());
         }
       }
 
